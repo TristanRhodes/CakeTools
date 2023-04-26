@@ -4,7 +4,7 @@ Cake tools for build, unit test, acceptance test, load test, benchmark, and vari
 ## Overview
 This build.cake file uses a `.cakemix` configuration file to determine what to pack, test, benchmark etc. It will create an initial version when first run in a project that will make a best guess default setup.
 
-## Cakemix schema
+## Cakemix C# Class
 
 ```
 public class BuildManifest
@@ -15,6 +15,38 @@ public class BuildManifest
 	public string[] AcceptanceTests { get; set; }
 	public string[] UnitTests { get; set; }
 	public string[] Benchmarks { get; set; }
+	public Dictionary<string, string> ApiSpecs { get; set; }
+}
+```
+
+## Cakemix Sample Schema
+
+```
+{
+  "NugetPackages": [
+    ".\\src\\Template.DbApi.Model\\Template.DbApi.Model.csproj",
+  ],
+  "DockerPackages": [
+    ".\\src\\Template.DbApi.Api\\Dockerfile",
+    ".\\src\\Template.DbApi.DbUp\\Dockerfile"
+  ],
+  "DockerComposeFiles": [
+    ".\\docker-compose.yml",
+    ".\\docker-compose.infra.yml",
+    ".\\docker-compose.override.yml"
+  ],
+  "AcceptanceTests": [
+    ".\\test\\Template.DbApi.AcceptanceTests\\Template.DbApi.AcceptanceTests.csproj"
+  ],
+  "UnitTests": [
+    ".\\test\\Template.DbApi.UnitTests\\Template.DbApi.UnitTests.csproj"
+  ],
+  "Benchmarks": [
+    ".\\test\\Template.DbApi.Benchmark\\Template.DbApi.Benchmark.csproj"
+  ],
+  "ApiSpecs": {
+    "Template.DbApi.Api": "http://localhost:5080"
+  }
 }
 ```
 
