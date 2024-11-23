@@ -23,28 +23,31 @@ public class BuildManifest
 ```
 {
   "NugetPackages": [
-    ".\\src\\Template.DbApi.Model\\Template.DbApi.Model.csproj",
+    "./src/Template.DbApi.Model/Template.DbApi.Model.csproj",
   ],
   "DockerPackages": [
-    ".\\src\\Template.DbApi.Api\\Dockerfile",
-    ".\\src\\Template.DbApi.DbUp\\Dockerfile"
+    "./src/Template.DbApi.Api/Dockerfile",
+    "./src/Template.DbApi.DbUp/Dockerfile"
   ],
   "DockerComposeFiles": [
-    ".\\docker-compose.yml",
-    ".\\docker-compose.infra.yml",
-    ".\\docker-compose.override.yml"
+    "./docker-compose.yml",
+    "./docker-compose.infra.yml",
+    "./docker-compose.override.yml"
   ],
   "Tests": [
-    ".\\test\\Template.DbApi.UnitTests\\Template.DbApi.UnitTests.csproj"
+    "./test/Template.DbApi.UnitTests/Template.DbApi.UnitTests.csproj"
   ],
   "Benchmarks": [
-    ".\\test\\Template.DbApi.Benchmark\\Template.DbApi.Benchmark.csproj"
+    "./test/Template.DbApi.Benchmark/Template.DbApi.Benchmark.csproj"
   ],
   "ApiSpecs": {
     "Template.DbApi.Api": "http://localhost:5080"
   }
 }
 ```
+
+## Note
+Use `/` for folder seperators as this works on both Windows and Linux.
 
 ## Targets
 * `BuildAndTest` - Build and UnitTest the projects. Writes results to `artifacts` folder.
