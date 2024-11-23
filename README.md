@@ -12,8 +12,7 @@ public class BuildManifest
 	public string[] NugetPackages { get; set; }
 	public string[] DockerPackages { get; set; }
 	public string[] DockerComposeFiles { get; set; }
-	public string[] AcceptanceTests { get; set; }
-	public string[] UnitTests { get; set; }
+	public string[] Tests { get; set; }
 	public string[] Benchmarks { get; set; }
 	public Dictionary<string, string> ApiSpecs { get; set; }
 }
