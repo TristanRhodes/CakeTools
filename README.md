@@ -11,7 +11,6 @@ public class BuildManifest
 {
 	public string[] NugetPackages { get; set; }
 	public string[] DockerPackages { get; set; }
-	public string[] DockerComposeFiles { get; set; }
 	public string[] Tests { get; set; }
 	public string[] Benchmarks { get; set; }
 	public Dictionary<string, string> ApiSpecs { get; set; }
@@ -28,11 +27,6 @@ public class BuildManifest
   "DockerPackages": [
     "./src/Template.DbApi.Api/Dockerfile",
     "./src/Template.DbApi.DbUp/Dockerfile"
-  ],
-  "DockerComposeFiles": [
-    "./docker-compose.yml",
-    "./docker-compose.infra.yml",
-    "./docker-compose.override.yml"
   ],
   "Tests": [
     "./test/Template.DbApi.UnitTests/Template.DbApi.UnitTests.csproj"
