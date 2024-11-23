@@ -60,9 +60,8 @@ Setup(context =>
 		{
 			NugetPackages = new string[0],
 			DockerComposeFiles = System.IO.Directory.GetFiles(".", "docker-compose*.yml"),
-			DockerPackages = System.IO.Directory.GetFiles(".\\src\\", "Dockerfile", SearchOption.AllDirectories),
-			UnitTests = System.IO.Directory.GetFiles(".", "*.UnitTests.csproj", SearchOption.AllDirectories),
-			AcceptanceTests = System.IO.Directory.GetFiles(".", "*.AcceptanceTests.csproj", SearchOption.AllDirectories),
+			DockerPackages = System.IO.Directory.GetFiles("./src/", "Dockerfile", SearchOption.AllDirectories),
+			Tests = System.IO.Directory.GetFiles(".", "*Tests.csproj", SearchOption.AllDirectories),
 			Benchmarks = System.IO.Directory.GetFiles(".", "*.Benchmark.csproj", SearchOption.AllDirectories),
 		};
 		SerializeJsonToPrettyFile(cakeMixFile, manifest);
@@ -107,7 +106,7 @@ Task("__ContainerArgsCheck")
 Task("__UnitTest")
 	.Does(() => {
 
-		foreach(var test in buildManifest.UnitTests)
+		foreach(var test in buildManifest.Tests)
 		{
 			Information($"Testing {test}...");
 
@@ -117,46 +116,6 @@ Task("__UnitTest")
 			{
 				Configuration = configuration,
 				ResultsDirectory = artifactsFolder
-			};
-
-			// Console log for build agent
-			settings.Loggers.Add("console;verbosity=normal");
-		
-			// Logging for trx test report artifact
-			settings.Loggers.Add($"trx;logfilename={testName}.trx");
-
-			DotNetTest(test, settings);
-		}
-	});
-
-Task("__DockerComposeUp")
-	.Does(() => {
-
-		var settings = new DockerComposeUpSettings 
-		{
-			Files = buildManifest.DockerComposeFiles,
-			DetachedMode = true
-		};
-		DockerComposeUp(settings);
-	});
-
-Task("__AcceptanceTest")
-	.IsDependentOn("__DockerComposeUp")
-	.Does(() => {
-
-		foreach(var test in buildManifest.AcceptanceTests)
-		{
-			Information($"Acceptance Testing {test}...");
-
-			var testName = System.IO.Path.GetFileNameWithoutExtension(test);
-
-			var settings = new DotNetTestSettings
-			{
-				Configuration = configuration,
-				ResultsDirectory = artifactsFolder,
-				EnvironmentVariables = new Dictionary<string, string> {
-					{ "env", "ci" }
-				}
 			};
 
 			// Console log for build agent
@@ -202,58 +161,6 @@ Task("__VersionInfo")
 		}
 
 		Information("Version Number: " + versionNumber);
-	});
-
-Task("__GenerateSwagger")
-	.Does(async () => {
-
-		if (!System.IO.Directory.Exists(swaggerFolder))
-			System.IO.Directory.CreateDirectory(swaggerFolder);
-
-		foreach(var kvp in buildManifest.ApiSpecs)
-		{
-			using var client = new System.Net.Http.HttpClient();
-			var response = await client.GetAsync($"{kvp.Value}/swagger/v1/swagger.json");
-			response.EnsureSuccessStatusCode();
-
-			var content = await response.Content.ReadAsStringAsync();
-
-			var fileArtifact = System.IO.Path.Combine(swaggerFolder, $"{kvp.Key}.swagger.json");
-
-			System.IO.File.WriteAllText(fileArtifact, content);
-		}
-	});
-
-Task("__GeneratePostman")
-	.Does(() => {
-		
-		// From Root:
-		// docker build ./docker/OpenApiToPostman/ -t tr/openapi-to-postmanv2
-		// docker run -d -v {localroot}\artifacts\swagger:/swagger -v {localroot}\artifacts\postman:/postman -p 8080:8080 tr/openapi-to-postmanv2
-
-		var basePath = System.IO.Path.GetFullPath(@".\artifacts");
-
-		// Build Docker
-		var buildSettings = new DockerImageBuildSettings
-		{
-			Tag = new [] { "tr/openapi-to-postmanv2" }
-		};
-		DockerBuild(buildSettings, "./docker/OpenApiToPostman/");
-
-		// Run Docker
-		var runSettings = new DockerContainerRunSettings 
-		{
-			Volume = new [] 
-			{ 
-				@$"{basePath}\swagger:/swagger",
-				@$"{basePath}\postman:/postman",
-			},
-			Publish = new []
-			{
-				"8080:8080"
-			}
-		};
-		DockerRun(runSettings, "tr/openapi-to-postmanv2", string.Empty, "-d");
 	});
 
 Task("__NugetPack")
@@ -321,7 +228,10 @@ Task("__DockerPack")
 		{
 			Information($"Packing Docker: {package}...");
 			var directoryName = System.IO.Path.GetDirectoryName(package);
+			Information($"Directory Name: {directoryName}");
 			var parts = directoryName.Split(System.IO.Path.DirectorySeparatorChar);
+			Information($"Parts: {parts.Length}");
+			Information($"Last Part: {parts.Last()}");
 			var packageName = parts.Last().ToLower();
 			packageName = $"{containerRegistry}/{packageName}".ToLower();	
 			
@@ -343,10 +253,12 @@ Task("__DockerPush")
 		{
 			Information($"Pushing Docker: {package}...");
 			var directoryName = System.IO.Path.GetDirectoryName(package);
+			Information($"Directory Name: {directoryName}");
 			var parts = directoryName.Split(System.IO.Path.DirectorySeparatorChar);
+			Information($"Parts: {parts.Length}");
+			Information($"Last Part: {parts.Last()}");
 			var packageName = parts.Last().ToLower();
-			packageName = $"{containerRegistry}/{packageName}".ToLower();	
-			var fullPackageName = $"{packageName}:{versionNumber}";
+			packageName = $"{containerRegistry}/{packageName}".ToLower();
 
 			var settings = new DockerImagePushSettings
 			{ 
@@ -362,9 +274,6 @@ Task("__DockerPush")
 Task("BuildAndTest")
 	.IsDependentOn("__UnitTest");
 
-Task("BuildAndAcceptanceTest")
-	.IsDependentOn("__AcceptanceTest");
-
 Task("BuildAndBenchmark")
 	.IsDependentOn("__Benchmark");
 
@@ -378,6 +287,8 @@ Task("NugetPackAndPush")
 
 Task("DockerPackAndPush")
 	.IsDependentOn("__ContainerArgsCheck")
+	.IsDependentOn("__VersionInfo")
+	.IsDependentOn("__UnitTest")
 	.IsDependentOn("__DockerLogin")
 	.IsDependentOn("__DockerPack")
 	.IsDependentOn("__DockerPush");
@@ -394,11 +305,6 @@ Task("FullPackAndPush")
 	.IsDependentOn("__NugetPush")
 	.IsDependentOn("__DockerPush");
 
-Task("ExportApiSpecs")
-	.IsDependentOn("__DockerComposeUp")
-	.IsDependentOn("__GenerateSwagger")
-	.IsDependentOn("__GeneratePostman");
-
 Task("Default")
 	.IsDependentOn("__UnitTest")
 	.IsDependentOn("__Benchmark");
@@ -407,18 +313,10 @@ RunTarget(target);
 
 public class BuildManifest
 {
-	// The projects to package as Nuget packages.
 	public string[] NugetPackages { get; set; }
-	// The projects to package as docker images
 	public string[] DockerPackages { get; set; }
-	// The docker compose files to launch. Should start with the docker-compose.yml file.
 	public string[] DockerComposeFiles { get; set; }
-	// The projects to run specflow tests against the API. Will spin up DockerCompose files to host API's.
-	public string[] AcceptanceTests { get; set; }
-	// The projects to run unit tests against. No infra required.
-	public string[] UnitTests { get; set; }
-	// The projects to run as Benchmark dotnet console apps. No infra required.
+	public string[] Tests { get; set; }
 	public string[] Benchmarks { get; set; }
-	// The Name and Url to retrieve swagger API specs from. Will spin up DockerCompose files to host API's.
 	public Dictionary<string, string> ApiSpecs { get; set; }
 }

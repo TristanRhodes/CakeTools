@@ -35,10 +35,7 @@ public class BuildManifest
     ".\\docker-compose.infra.yml",
     ".\\docker-compose.override.yml"
   ],
-  "AcceptanceTests": [
-    ".\\test\\Template.DbApi.AcceptanceTests\\Template.DbApi.AcceptanceTests.csproj"
-  ],
-  "UnitTests": [
+  "Tests": [
     ".\\test\\Template.DbApi.UnitTests\\Template.DbApi.UnitTests.csproj"
   ],
   "Benchmarks": [
@@ -54,7 +51,6 @@ public class BuildManifest
 * `BuildAndTest` - Build and UnitTest the projects. Writes results to `artifacts` folder.
 * `BuildAndAcceptanceTest` - Spin up apps and containers. Run Specflow AT project. Writes results to `artifacts` folder.
 * `BuildAndBenchmark` - Build and Benchmark the projects. Writes results to `artifacts` folder.
-* `ExportApiSpecs` - Generate Swagger specs and Postman collections. Writes results to `artifacts` folder.
 * `NugetPackAndPush` - Package and Push nuget packages. Writes results to `artifacts` folder.
 * `DockerPackAndPush` - Package and push apps as docker images.
 * `FullPackAndPush` - Package and Push nuget and docker images.
