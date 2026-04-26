@@ -45,7 +45,6 @@ Use `/` for folder seperators as this works on both Windows and Linux.
 
 ## Targets
 * `BuildAndTest` - Build and UnitTest the projects. Writes results to `artifacts` folder.
-* `BuildAndAcceptanceTest` - Spin up apps and containers. Run Specflow AT project. Writes results to `artifacts` folder.
 * `BuildAndBenchmark` - Build and Benchmark the projects. Writes results to `artifacts` folder.
 * `NugetPackAndPush` - Package and Push nuget packages. Writes results to `artifacts` folder.
 * `DockerPackAndPush` - Package and push apps as docker images.
