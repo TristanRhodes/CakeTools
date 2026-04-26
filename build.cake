@@ -59,7 +59,6 @@ Setup(context =>
 		var manifest = new BuildManifest
 		{
 			NugetPackages = new string[0],
-			DockerComposeFiles = System.IO.Directory.GetFiles(".", "docker-compose*.yml"),
 			DockerPackages = System.IO.Directory.GetFiles("./src/", "Dockerfile", SearchOption.AllDirectories),
 			Tests = System.IO.Directory.GetFiles(".", "*Tests.csproj", SearchOption.AllDirectories),
 			Benchmarks = System.IO.Directory.GetFiles(".", "*.Benchmark.csproj", SearchOption.AllDirectories),
@@ -149,6 +148,19 @@ Task("__Benchmark")
 			DotNetRun(benchmark, settings);
 		}
 	});
+
+Task("__LintCheck")
+    .Does(() =>
+    {
+        Information("Running lint check with dotnet format...");
+        // Run `dotnet format --verify-no-changes`
+        var result = StartProcess("dotnet", "format --verify-no-changes");
+        if (result != 0)
+        {
+            throw new Exception("Lint check failed: code formatting violations detected. Run `dotnet format`");
+        }
+        Information("Lint check passed – no formatting changes required.");
+    });
 
 Task("__VersionInfo")
 	.Does(() => {
@@ -280,6 +292,7 @@ Task("BuildAndBenchmark")
 Task("NugetPackAndPush")
 	.IsDependentOn("__NugetArgsCheck")
 	.IsDependentOn("__VersionInfo")
+	.IsDependentOn("__LintCheck")
 	.IsDependentOn("__UnitTest")
 	.IsDependentOn("__Benchmark")
 	.IsDependentOn("__NugetPack")
@@ -288,7 +301,9 @@ Task("NugetPackAndPush")
 Task("DockerPackAndPush")
 	.IsDependentOn("__ContainerArgsCheck")
 	.IsDependentOn("__VersionInfo")
+	.IsDependentOn("__LintCheck")
 	.IsDependentOn("__UnitTest")
+	.IsDependentOn("__Benchmark")
 	.IsDependentOn("__DockerLogin")
 	.IsDependentOn("__DockerPack")
 	.IsDependentOn("__DockerPush");
@@ -297,6 +312,7 @@ Task("FullPackAndPush")
 	.IsDependentOn("__NugetArgsCheck")
 	.IsDependentOn("__ContainerArgsCheck")
 	.IsDependentOn("__VersionInfo")
+	.IsDependentOn("__LintCheck")
 	.IsDependentOn("__UnitTest")
 	.IsDependentOn("__Benchmark")
 	.IsDependentOn("__NugetPack")
@@ -306,6 +322,7 @@ Task("FullPackAndPush")
 	.IsDependentOn("__DockerPush");
 
 Task("Default")
+	.IsDependentOn("__LintCheck")
 	.IsDependentOn("__UnitTest")
 	.IsDependentOn("__Benchmark");
 
@@ -315,7 +332,6 @@ public class BuildManifest
 {
 	public string[] NugetPackages { get; set; }
 	public string[] DockerPackages { get; set; }
-	public string[] DockerComposeFiles { get; set; }
 	public string[] Tests { get; set; }
 	public string[] Benchmarks { get; set; }
 	public Dictionary<string, string> ApiSpecs { get; set; }
